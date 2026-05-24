@@ -1,0 +1,7 @@
+This tracks the exact environment configurations compiled via `uv`.
+
+
+customtkinter>=5.2.2
+psutil>=5.9.8
+matplotlib>=3.8.0
+
