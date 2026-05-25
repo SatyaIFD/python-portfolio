@@ -7,5 +7,7 @@ __pycache__/
 .DS_Store
 *.csv
 *.json
+*.db
+*_cleaned.csv
 venv/
 .env

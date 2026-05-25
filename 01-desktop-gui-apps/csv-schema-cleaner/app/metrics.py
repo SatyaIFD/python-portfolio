@@ -1,77 +1,92 @@
 import pandas as pd
 import numpy as np
-
+import re
 
 class DataProcessor:
     """
-    Utility class for loading, validating, and cleaning structured data
-    from CSV or JSON files using pandas.
+    Advanced engine for multi-rule validation and data cleaning.
     """
 
     def __init__(self, file_path):
-        # Load dataset immediately when object is created
         self.df = self.load_data(file_path)
+        # Tracks anomalies: { "ColumnName": [list_of_invalid_indices] }
+        self.anomaly_map = {}
 
     def load_data(self, path):
-        """
-        Load data from a CSV or JSON file into a pandas DataFrame.
+        """Loads CSV or JSON with basic error handling."""
+        try:
+            if path.endswith('.csv'):
+                return pd.read_csv(path)
+            elif path.endswith('.json'):
+                return pd.read_json(path)
+            else:
+                raise ValueError("Unsupported file format. Please use CSV or JSON.")
+        except Exception as e:
+            print(f"Error loading file: {e}")
+            return pd.DataFrame()
 
+    def validate_all(self, rules_config):
+        """
+        Validates multiple columns at once.
         Args:
-            path (str): File path to the dataset
-
-        Returns:
-            pd.DataFrame: Loaded dataset
+            rules_config (dict): e.g., {"Email_Col": "Email", "Age_Col": "No Nulls"}
         """
-        if path.endswith('.csv'):
-            return pd.read_csv(path)
-
-        # Default to JSON if not CSV
-        return pd.read_json(path)
+        self.anomaly_map = {} # Reset current anomalies
+        for col, rule in rules_config.items():
+            invalid_indices = self.validate_column(col, rule)
+            if not invalid_indices.empty:
+                self.anomaly_map[col] = invalid_indices.tolist()
+        return self.anomaly_map
 
     def validate_column(self, col_name, rule_type):
         """
-        Validate a column based on a given rule and return indices
-        of rows that FAIL validation.
-
-        Args:
-            col_name (str): Column to validate
-            rule_type (str): Type of validation rule ("Email", "No Nulls")
-
-        Returns:
-            pd.Index: Indices of invalid rows
+        Validation logic for specific data types.
         """
+        if col_name not in self.df.columns:
+            return pd.Index([])
 
-        # Email format validation using regex
         if rule_type == "Email":
-            regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-
-            # Identify valid email entries
-            mask = self.df[col_name].str.contains(regex, na=False)
-
-            # Return rows that do NOT match the pattern
+            regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            # Convert to string to avoid errors with mixed types/NaNs
+            mask = self.df[col_name].astype(str).str.contains(regex, na=False)
             return self.df[~mask].index
 
-        # Check for missing/null values
         elif rule_type == "No Nulls":
-            return self.df[self.df[col_name].isna()].index
+            return self.df[self.df[col_name].isna() | (self.df[col_name].astype(str).str.strip() == "")].index
 
-        # If rule type is unsupported, return empty result
+        elif rule_type == "Numeric":
+            # Identify rows that cannot be converted to a number
+            is_numeric = pd.to_numeric(self.df[col_name], errors='coerce').notnull()
+            return self.df[~is_numeric].index
+
         return pd.Index([])
 
-    def clean_and_export(self, path, drop_indices):
+    def get_health_report(self):
+        """Returns a summary of errors found."""
+        report = {col: len(idxs) for col, idxs in self.anomaly_map.items()}
+        total_rows = len(self.df)
+        dirty_rows = len(set([i for sublist in self.anomaly_map.values() for i in sublist]))
+        
+        return {
+            "detail": report,
+            "total_anomalies": dirty_rows,
+            "clean_percentage": round(((total_rows - dirty_rows) / total_rows) * 100, 2) if total_rows > 0 else 0
+        }
+
+    def clean_and_export(self, output_path):
         """
-        Remove invalid rows and export cleaned dataset to a CSV file.
-
-        Args:
-            path (str): Output file path
-            drop_indices (list or pd.Index): Row indices to remove
-
-        Returns:
-            None
+        Drops all unique invalid rows tracked in anomaly_map and exports.
         """
+        if not self.anomaly_map:
+            # If no validation was run, just export the current df
+            self.df.to_csv(output_path, index=False)
+            return
 
-        # Drop invalid rows from dataframe
-        cleaned_df = self.df.drop(drop_indices)
+        # Get unique indices from all failed rules
+        all_bad_indices = set()
+        for idx_list in self.anomaly_map.values():
+            all_bad_indices.update(idx_list)
 
-        # Save cleaned dataset
-        cleaned_df.to_csv(path, index=False)
+        cleaned_df = self.df.drop(index=list(all_bad_indices))
+        cleaned_df.to_csv(output_path, index=False)
+        return len(all_bad_indices) # Return count of dropped rows
