@@ -1,0 +1,8 @@
+# Core API & Networking
+requests>=2.31.0
+
+# Data Manipulation & Time-Series Handling
+pandas>=2.2.0
+
+# Interactive Visualization & Reporting
+plotly>=5.20.0
