@@ -2,5 +2,5 @@
 *.html linguist-vendored
 data/* linguist-documentation
 
-# Alternatively, if you want to be specific:
+# For specific files
 price_report.html linguist-vendored
