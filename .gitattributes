@@ -1,0 +1,6 @@
+# Tell GitHub to treat the generated report as data, not code
+*.html linguist-vendored
+data/* linguist-documentation
+
+# Alternatively, if you want to be specific:
+price_report.html linguist-vendored
