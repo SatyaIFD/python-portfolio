@@ -1,0 +1,16 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Explicitly declare text files you want to keep normalized 
+# using LF (Unix-style) endings to guarantee script safety
+*.py text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+
+# Denote all binary files (Git will leave these completely untouched)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary

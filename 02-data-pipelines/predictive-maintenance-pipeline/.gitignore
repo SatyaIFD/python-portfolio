@@ -1,0 +1,58 @@
+# ==========================================
+# Byte-compiled / optimized / DLL files
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ==========================================
+# C extensions & OS files
+# ==========================================
+*.so
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Project Environments & Dependencies
+# ==========================================
+.venv/
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==========================================
+# Pipeline Outputs & MLOps Artifacts
+# ==========================================
+# Blocks heavy datasets and saved binaries from bloated commits
+artifacts/
+*.joblib
+*.pkl
+*.csv
+*.json
+!data_processor.py # explicit safety for code files if named similarly
+
+# ==========================================
+# IDEs and Configurations
+# ==========================================
+.idea/
+.vscode/
+*.swp
+*.swo
+.env
